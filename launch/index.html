@@ -24,7 +24,7 @@
     <div id="launch-section" class="mb-8">
         <h2 class="text-2xl font-semibold text-gray-700 mb-4">Step 1: Simulate App Launch</h2>
         <p class="text-gray-600 mb-4">
-            A real EHR would launch your app with a unique authorization code. Click the button below to simulate this process.
+            A real EHR would launch your app with a unique authorization code and the patient ID. Click the button below to simulate this process.
         </p>
         <button id="launch-button" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-colors">
             Simulate App Launch
@@ -72,8 +72,6 @@
     
     // Public SMART Health IT Sandbox URLs
     const DEMO_FHIR_SERVER = 'https://r4.smarthealthit.org';
-    // Updated patient ID that is known to be stable
-    const DEMO_PATIENT_ID = 'f201';
 
     // --- DOM Elements ---
     const launchButton = document.getElementById('launch-button');
@@ -86,6 +84,7 @@
     const messageText = document.getElementById('message-text');
 
     let accessToken = null;
+    let patientId = null;
 
     /**
      * Shows a message box with the given text and color.
@@ -106,7 +105,8 @@
      */
     function handleLaunch() {
         const mockCode = 'mock-auth-code-12345';
-        const redirectUrlWithCode = `${YOUR_REDIRECT_URI}?code=${mockCode}`;
+        const mockPatientId = 'e-smart-2'; // Simulates the patient ID passed by the EHR
+        const redirectUrlWithCode = `${YOUR_REDIRECT_URI}?code=${mockCode}&patient=${mockPatientId}`;
         
         // This simulates the EHR redirecting the user directly to the Redirect URI.
         // It's the simplest way to get the authorization code into the URL for a single HTML file.
@@ -119,8 +119,9 @@
     function handleRedirect() {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
+        patientId = urlParams.get('patient');
 
-        if (code) {
+        if (code && patientId) {
             launchSection.classList.add('hidden');
             dataSection.classList.remove('hidden');
             tokenStatus.textContent = 'Authorization code received. Simulating token exchange...';
@@ -148,8 +149,12 @@
             showMessage('Please complete the authentication flow first.', 'bg-red-500');
             return;
         }
+        if (!patientId) {
+            showMessage('No patient ID was provided in the URL.', 'bg-red-500');
+            return;
+        }
 
-        const patientFhirUrl = `${DEMO_FHIR_SERVER}/Patient/${DEMO_PATIENT_ID}`;
+        const patientFhirUrl = `${DEMO_FHIR_SERVER}/Patient/${patientId}`;
 
         try {
             const response = await fetch(patientFhirUrl, {
