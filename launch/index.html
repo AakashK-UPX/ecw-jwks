@@ -66,6 +66,7 @@
 <script>
     // --- User Configuration ---
     // The URLs you have registered with eClinicalWorks.
+    // NOTE: The Launch URL is not used in this simplified simulation.
     const YOUR_LAUNCH_URL = "https://aakashk-upx.github.io/ecw-jwks/launch";
     const YOUR_REDIRECT_URI = "https://aakashk-upx.github.io/ecw-jwks/redirect";
     
@@ -103,13 +104,12 @@
      * Simulates the EHR launch by redirecting the user with a mock authorization code.
      */
     function handleLaunch() {
-        // In a real app, this redirect would be sent by the EHR.
         const mockCode = 'mock-auth-code-12345';
         const redirectUrlWithCode = `${YOUR_REDIRECT_URI}?code=${mockCode}`;
         
-        // This simulates the EHR launching your app's Launch URL
-        // and then redirecting to the Redirect URL with the code.
-        window.location.href = `${YOUR_LAUNCH_URL}?redirect_uri=${encodeURIComponent(redirectUrlWithCode)}`;
+        // This simulates the EHR redirecting the user directly to the Redirect URI.
+        // It's the simplest way to get the authorization code into the URL for a single HTML file.
+        window.location.href = redirectUrlWithCode;
     }
 
     /**
