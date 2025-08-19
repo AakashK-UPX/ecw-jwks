@@ -1,195 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eClinicalWorks FHIR API Tester</title>
-    <!-- Use Tailwind CSS for rapid styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>eClinicalWorks FHIR Provider Tester</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl">
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">eClinicalWorks FHIR Tester</h1>
-    <p class="text-sm text-gray-600 mb-6 text-center">
-        This app demonstrates the FHIR data flow for an "EMR Launch" using the eClinicalWorks sandbox. It simulates a patient data request to test authentication and data retrieval.
-    </p>
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl">
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">eClinicalWorks FHIR Provider Tester</h1>
+  <p class="text-sm text-gray-600 mb-6 text-center">
+    Demo app for testing EMR Launch and retrieving provider-level FHIR data from the eCW sandbox.
+  </p>
 
-    <!-- UI for simulating the EHR launch -->
-    <div id="launch-section" class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Step 1: Simulate EHR Launch</h2>
-        <p class="text-gray-600 mb-4">
-            A real EMR would launch your app with a unique authorization code and the patient ID. Click the button below to simulate this process.
-        </p>
-        <button id="launch-button" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition-colors">
-            Simulate EHR Launch
-        </button>
+  <!-- Step 1: Launch -->
+  <div id="launch-section" class="mb-8">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Step 1: Simulate EMR Launch</h2>
+    <p class="text-gray-600 mb-4">Click below to simulate the EMR launching this app with context.</p>
+    <button id="launch-button"
+      class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-600 transition">
+      Simulate EMR Launch
+    </button>
+  </div>
+
+  <!-- Step 2: Token + Data -->
+  <div id="data-section" class="hidden">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Step 2: Request Data</h2>
+    
+    <!-- Token display -->
+    <div class="mb-4">
+      <h3 class="text-xl font-medium text-gray-700">Access Token</h3>
+      <div id="token-status"
+           class="bg-gray-200 p-4 rounded-md text-gray-800 text-sm break-all">
+        Access token will appear here...
+      </div>
     </div>
 
-    <!-- UI for retrieving the access token and data -->
-    <div id="data-section" class="hidden">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Step 2: Get Data from FHIR Server</h2>
-        
-        <div class="mb-4">
-            <h3 class="text-xl font-medium text-gray-700">Access Token</h3>
-            <div id="token-status" class="bg-gray-200 p-4 rounded-md text-gray-800 text-sm break-all">
-                Access token will be displayed here...
-            </div>
-            <p class="mt-2 text-sm text-gray-500">
-                In a real app, this step would happen on your secure backend server.
-            </p>
-        </div>
+    <!-- Resource selector -->
+    <label for="resource-select" class="block mb-2 text-gray-700 font-medium">Choose Resource Type:</label>
+    <select id="resource-select" class="w-full border rounded-lg p-2 mb-4">
+      <option value="Patient">Patient</option>
+      <option value="Observation">Observation</option>
+      <option value="Condition">Condition</option>
+      <option value="Encounter">Encounter</option>
+      <option value="MedicationRequest">MedicationRequest</option>
+      <option value="Medication">Medication</option>
+      <option value="AllergyIntolerance">AllergyIntolerance</option>
+      <option value="Immunization">Immunization</option>
+      <option value="DocumentReference">DocumentReference</option>
+    </select>
 
-        <button id="get-data-button" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition-colors">
-            Get Patient Data (Read-Only)
-        </button>
+    <button id="get-data-button"
+      class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-green-600 transition">
+      Get Selected Resource
+    </button>
 
-        <div class="mt-6">
-            <h3 class="text-xl font-medium text-gray-700 mb-2">Patient Data</h3>
-            <pre id="data-output" class="bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
-                Data will be displayed here...
-            </pre>
-        </div>
+    <!-- Output -->
+    <div class="mt-6">
+      <h3 class="text-xl font-medium text-gray-700 mb-2">FHIR Response</h3>
+      <pre id="data-output"
+           class="bg-gray-800 text-green-400 p-4 rounded-md overflow-x-auto text-sm">
+Data will be displayed here...
+      </pre>
     </div>
+  </div>
 
-    <!-- Message box for user feedback -->
-    <div id="message-box" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-xl hidden">
-        <p id="message-text"></p>
-    </div>
+  <!-- Message Box -->
+  <div id="message-box"
+       class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-xl hidden">
+    <p id="message-text"></p>
+  </div>
 </div>
 
 <script>
-    // --- User Configuration ---
-    // The URLs you have registered with eClinicalWorks.
-    const YOUR_LAUNCH_URL = "https://aakashk-upx.github.io/ecw-jwks/launch";
-    const YOUR_REDIRECT_URI = "https://aakashk-upx.github.io/ecw-jwks/redirect";
-    
-    // eClinicalWorks Sandbox URL from your documentation
-    const ECW_FHIR_SERVER = 'https://staging-fhir.ecwcloud.com/fhir/r4/FFBJCD';
+  // --- Configuration ---
+  const YOUR_LAUNCH_URL = "https://aakashk-upx.github.io/ecw-jwks/launch";
+  const YOUR_REDIRECT_URI = "https://aakashk-upx.github.io/ecw-jwks/redirect";
+  const ECW_FHIR_SERVER = 'https://staging-fhir.ecwcloud.com/fhir/r4/FFBJCD';
 
-    // --- DOM Elements ---
-    const launchButton = document.getElementById('launch-button');
-    const launchSection = document.getElementById('launch-section');
-    const dataSection = document.getElementById('data-section');
-    const tokenStatus = document.getElementById('token-status');
-    const getDataButton = document.getElementById('get-data-button');
-    const dataOutput = document.getElementById('data-output');
-    const messageBox = document.getElementById('message-box');
-    const messageText = document.getElementById('message-text');
+  // --- DOM Elements ---
+  const launchButton = document.getElementById('launch-button');
+  const launchSection = document.getElementById('launch-section');
+  const dataSection = document.getElementById('data-section');
+  const tokenStatus = document.getElementById('token-status');
+  const getDataButton = document.getElementById('get-data-button');
+  const dataOutput = document.getElementById('data-output');
+  const resourceSelect = document.getElementById('resource-select');
+  const messageBox = document.getElementById('message-box');
+  const messageText = document.getElementById('message-text');
 
-    let accessToken = null;
-    let patientId = null;
+  let accessToken = null;
+  let patientId = null;
 
-    /**
-     * Shows a message box with the given text and color.
-     * @param {string} message The message to display.
-     * @param {string} color The background color of the box (e.g., 'bg-red-500').
-     */
-    function showMessage(message, color) {
-        messageBox.className = `fixed bottom-4 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-lg shadow-xl ${color}`;
-        messageText.textContent = message;
-        messageBox.classList.remove('hidden');
-        setTimeout(() => {
-            messageBox.classList.add('hidden');
-        }, 5000);
+  function showMessage(message, color) {
+    messageBox.className = `fixed bottom-4 left-1/2 -translate-x-1/2 text-white px-6 py-3 rounded-lg shadow-xl ${color}`;
+    messageText.textContent = message;
+    messageBox.classList.remove('hidden');
+    setTimeout(() => messageBox.classList.add('hidden'), 5000);
+  }
+
+  // Step 1: Simulate EMR launch
+  function handleLaunch() {
+    const mockCode = 'mock-auth-code-12345';
+    const mockPatientId = 'Lt2IFR5Ah76n4d8TFP5gBJiCIKJuEyZG8Ek3KV3aIFE'; 
+    const redirectUrlWithCode = `${YOUR_REDIRECT_URI}?code=${mockCode}&patient=${mockPatientId}`;
+    window.location.href = redirectUrlWithCode;
+  }
+
+  // Step 2: Handle redirect + token
+  function handleRedirect() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    patientId = urlParams.get('patient');
+
+    if (code && patientId) {
+      launchSection.classList.add('hidden');
+      dataSection.classList.remove('hidden');
+      tokenStatus.textContent = 'Authorization code received. Simulating token exchange...';
+
+      setTimeout(() => {
+        accessToken = 'mock-access-token-for-demo';
+        tokenStatus.textContent = `Access Token: ${accessToken}`;
+        showMessage('Authentication successful!', 'bg-green-500');
+      }, 1000);
+    }
+  }
+
+  // Step 3: Fetch resource
+  async function getResource() {
+    if (!accessToken) {
+      showMessage('Complete authentication first.', 'bg-red-500');
+      return;
+    }
+    if (!patientId) {
+      showMessage('Missing patient ID.', 'bg-red-500');
+      return;
     }
 
-    /**
-     * Simulates the EHR launch by redirecting the user with a mock authorization code.
-     */
-    function handleLaunch() {
-        const mockCode = 'mock-auth-code-12345';
-        // Using a test patient ID from your documentation
-        const mockPatientId = 'Lt2IFR5Ah76n4d8TFP5gBJiCIKJuEyZG8Ek3KV3aIFE'; 
-        const redirectUrlWithCode = `${YOUR_REDIRECT_URI}?code=${mockCode}&patient=${mockPatientId}`;
-        
-        // This simulates the EHR redirecting the user directly to the Redirect URI.
-        // It's the simplest way to get the authorization code into the URL for a single HTML file.
-        window.location.href = redirectUrlWithCode;
+    const resourceType = resourceSelect.value;
+    const url = `${ECW_FHIR_SERVER}/${resourceType}?patient=${patientId}`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/fhir+json',
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData, null, 2));
+      }
+
+      const data = await response.json();
+      dataOutput.textContent = JSON.stringify(data, null, 2);
+      showMessage(`${resourceType} data retrieved!`, 'bg-green-500');
+
+    } catch (error) {
+      dataOutput.textContent = `Error fetching data: \n${error.message}`;
+      showMessage('Data retrieval failed.', 'bg-red-500');
+      console.error('Error:', error);
     }
+  }
 
-    /**
-     * Handles the redirect from the EHR and simulates the token exchange.
-     */
-    function handleRedirect() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        patientId = urlParams.get('patient');
-
-        if (code && patientId) {
-            launchSection.classList.add('hidden');
-            dataSection.classList.remove('hidden');
-            tokenStatus.textContent = 'Authorization code received. Simulating token exchange...';
-            
-            // --- CRITICAL SECURITY NOTE ---
-            // A REAL APP WOULD NOT DO THIS ON THE CLIENT.
-            // It would make a secure POST request to its own backend server.
-            // The backend would then exchange the code for a real access token.
-            // This is a simplified demonstration of the flow.
-
-            // Simulate receiving a token from the secure backend
-            setTimeout(() => {
-                accessToken = 'mock-access-token-for-demo';
-                tokenStatus.textContent = `Access Token: ${accessToken}`;
-                showMessage('Authentication flow successful!', 'bg-green-500');
-            }, 1000);
-        }
-    }
-
-    /**
-     * Fetches patient data from the public FHIR server using the mock token.
-     */
-    async function getPatientData() {
-        if (!accessToken) {
-            showMessage('Please complete the authentication flow first.', 'bg-red-500');
-            return;
-        }
-        if (!patientId) {
-            showMessage('No patient ID was provided in the URL.', 'bg-red-500');
-            return;
-        }
-
-        const patientFhirUrl = `${ECW_FHIR_SERVER}/Patient/${patientId}`;
-
-        try {
-            const response = await fetch(patientFhirUrl, {
-                headers: {
-                    'Accept': 'application/fhir+json',
-                    // This is a mock token for the public sandbox.
-                    // In a real app, this would be the actual token from the backend.
-                    'Authorization': `Bearer ${accessToken}` 
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(JSON.stringify(errorData, null, 2));
-            }
-
-            const data = await response.json();
-            dataOutput.textContent = JSON.stringify(data, null, 2);
-            showMessage('Successfully retrieved patient data!', 'bg-green-500');
-
-        } catch (error) {
-            dataOutput.textContent = `Error fetching data: \n${error.message}`;
-            showMessage('Failed to retrieve data. Check console for details.', 'bg-red-500');
-            console.error('Error:', error);
-        }
-    }
-
-    // --- Event Listeners and Initial Setup ---
-    launchButton.addEventListener('click', handleLaunch);
-    getDataButton.addEventListener('click', getPatientData);
-    
-    // Check for a redirect on page load
-    window.onload = handleRedirect;
-
+  // Event listeners
+  launchButton.addEventListener('click', handleLaunch);
+  getDataButton.addEventListener('click', getResource);
+  window.onload = handleRedirect;
 </script>
-
 </body>
 </html>
