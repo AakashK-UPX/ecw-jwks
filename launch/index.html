@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- This meta tag allows your page to be displayed in an iframe -->
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self' https://*.ecwcloud.com;">
     <title>eCW Launch App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -35,7 +37,7 @@
         if (iss && launch) {
             // Forward the parameters to our backend server
             // Ensure this URL is correct for where you're running your Flask app
-            const backendUrl = `http://127.0.0.1:8080/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
+            const backendUrl = `https://c611e591d356.ngrok-free.app/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
             window.location.href = backendUrl;
         } else {
             // Handle cases where the launch parameters are missing
