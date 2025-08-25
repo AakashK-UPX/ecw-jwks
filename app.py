@@ -6,7 +6,7 @@ import secrets
 import hashlib
 import base64
 import json
-import uuid  # Added import for the UUID library
+import uuid
 import jwt
 from flask import Flask, request, redirect, jsonify, session
 import requests
