@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCW Redirect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Processing Authentication...</h1>
+        <p class="text-gray-600 mb-6">Securing your connection. Please wait.</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            <div class="bg-blue-600 h-2.5 rounded-full animate-pulse" style="width: 100%;"></div>
+        </div>
+        <p class="text-xs text-gray-500">This should only take a moment.</p>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+
+        if (code && state) {
+            // Forward the authorization code and state to our backend server.
+            // Ensure this URL is correct for where you're running your Flask app
+            const backendUrl = `http://127.0.0.1:8080/ecw-jwks/redirect?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+            window.location.href = backendUrl;
+        } else {
+            // Handle cases where the redirect failed or parameters are missing
+            console.error("Missing 'code' or 'state' parameters in URL.");
+            document.querySelector("h1").textContent = "Authentication Failed";
+            document.querySelector("p").textContent = "Something went wrong. Please try launching the app again.";
+            document.querySelector(".animate-pulse").style.width = "0%";
+        }
+    </script>
+</body>
+</html>

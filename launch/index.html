@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eCW Launch App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Launching Clinical Note Summarizer...</h1>
+        <p class="text-gray-600 mb-6">Please wait while we securely connect with eClinicalWorks.</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            <div class="bg-blue-600 h-2.5 rounded-full animate-pulse" style="width: 100%;"></div>
+        </div>
+        <p class="text-xs text-gray-500">Redirecting to authenticate.</p>
+    </div>
+
+    <script>
+        // Get the 'iss' and 'launch' parameters from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const iss = urlParams.get('iss');
+        const launch = urlParams.get('launch');
+
+        if (iss && launch) {
+            // Forward the parameters to our backend server
+            // Ensure this URL is correct for where you're running your Flask app
+            const backendUrl = `http://127.0.0.1:8080/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
+            window.location.href = backendUrl;
+        } else {
+            // Handle cases where the launch parameters are missing
+            console.error("Missing 'iss' or 'launch' parameters in URL.");
+            document.querySelector("h1").textContent = "Launch Failed";
+            document.querySelector("p").textContent = "Missing required parameters. Please launch from eClinicalWorks.";
+            document.querySelector(".animate-pulse").style.width = "0%";
+        }
+    </script>
+</body>
+</html>
