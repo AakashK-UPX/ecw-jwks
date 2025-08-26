@@ -1,5 +1,5 @@
 # To run this code, you will need to install the following libraries:
-# pip install Flask requests python-dotenv pyjwt cryptography
+# pip install Flask requests pyjwt cryptography
 
 import os
 import secrets
@@ -10,52 +10,48 @@ import uuid
 import jwt
 from flask import Flask, request, redirect, jsonify, session
 import requests
-from dotenv import load_dotenv
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
-# Load environment variables from the .env file
-load_dotenv()
-
-# --- Configuration: Replace these with your actual app details ---
-CLIENT_ID = os.getenv("CLIENT_ID", "YOUR_CLIENT_ID")
-# The private key is now loaded securely from the .env file
-PRIVATE_KEY_PEM = os.getenv("PRIVATE_KEY_PEM")
-JWKS_KID = os.getenv("JWKS_KID")
-LAUNCH_URL = "https://aakashk-upx.github.io/ecw-jwks/launch"
-REDIRECT_URL = "https://aakashk-upx.github.io/ecw-jwks/redirect"
+# --- Configuration: Hardcoded app details ---
+# IMPORTANT: Hardcoding secrets is NOT a secure practice for production environments.
+# This is for testing purposes only.
+CLIENT_ID = "uf2cZkTF-ApHsH89m62qHgO5IyaMR9rVVMaA077M4wk"
+JWKS_KID = "650c8b7e-6a2a-44fa-84dd-27221a582b15"
+LAUNCH_URL = "https://aakashk-upx.github.io/ecw-jwks/launch/"
+REDIRECT_URL = "https://aakashk-upx.github.io/ecw-jwks/redirect/"
 
 # The scopes requested by your application, as configured in the eCW Developer Portal.
+# CORRECTED: This list has been filtered to include only those supported by eCW sandbox.
+# REQUESTED_SCOPES = (
+#     "launch openid fhirUser "
+#     "user/Patient.read user/DocumentReference.read user/Procedure.read "
+#     "user/Medication.read user/AllergyIntolerance.read user/Encounter.read "
+#     "user/Observation.read user/DiagnosticReport.read user/Organization.read "
+#     "user/PractitionerRole.read user/Immunization.read user/MedicationRequest.read "
+#     "user/MedicationAdministration.read user/Goal.read user/Practitioner.read "
+#     "user/CareTeam.read user/Condition.read user/Provenance.read user/CarePlan.read"
+# )
 REQUESTED_SCOPES = (
-    "launch openid fhirUser "
-    "user/Patient.read user/DocumentReference.read user/Procedure.read user/Medication.read "
-    "user/AllergyIntolerance.read user/Encounter.read user/Observation.read "
-    "user/ServiceRequest.read user/DiagnosticReport.read user/Organization.read "
-    "user/PractitionerRole.read user/Immunization.read user/MedicationRequest.read "
-    "user/MedicationAdministration.read user/Goal.read user/Practitioner.read "
-    "user/CareTeam.read user/Condition.read user/Provenance.read user/CarePlan.read"
+    "fhirUser patient/Patient.read"
 )
 
 app = Flask(__name__)
-# A secret key is required for Flask sessions to securely store temporary data.
 app.secret_key = secrets.token_hex(16) 
 
 # --- Routes for the SMART on FHIR Launch Sequence ---
 
 @app.route("/ecw-jwks/launch", methods=["GET"])
 def launch():
-    """
-    Handles the initial EHR launch request from eClinicalWorks.
-    This is the first step of the SMART on FHIR launch sequence.
-    """
     iss = request.args.get("iss")
     launch_context = request.args.get("launch")
 
     if not iss or not launch_context:
         return jsonify({"error": "Missing 'iss' or 'launch' parameter"}), 400
 
-    auth_server_url = "https://staging-auth.ecwcloud.com/oauth2/authorize" 
-    token_server_url = "https://staging-auth.ecwcloud.com/oauth2/token"
+    # CORRECTED: Use the correct authorization and token URLs from the discovery document
+    auth_server_url = "https://staging-oauthserver.ecwcloud.com/oauth/oauth2/authorize" 
+    token_server_url = "https://staging-oauthserver.ecwcloud.com/oauth/oauth2/token"
 
     session["iss"] = iss
     session["launch_context"] = launch_context
@@ -74,10 +70,10 @@ def launch():
         "response_type": "code",
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URL,
-        "scope": REQUESTED_SCOPES,
-        "aud": iss,
         "launch": launch_context,
         "state": state,
+        "scope": REQUESTED_SCOPES,
+        "aud": iss,
         "code_challenge": code_challenge,
         "code_challenge_method": "S256"
     }
@@ -87,10 +83,6 @@ def launch():
 
 @app.route("/ecw-jwks/redirect", methods=["GET"])
 def redirect_handler():
-    """
-    Handles the redirect from the authorization server after the user has approved the app.
-    This is the second step of the SMART on FHIR launch sequence.
-    """
     if request.args.get("state") != session.get("state"):
         return jsonify({"error": "Invalid state parameter"}), 400
 
@@ -101,34 +93,33 @@ def redirect_handler():
     if not auth_code or not token_server_url or not fhir_base_url:
         return jsonify({"error": "Missing required parameters from session"}), 400
         
-    # Generate the JWT for client authentication
-    # This is a key part of the JWT-based authentication flow.
-    # The 'aud' (audience) for the JWT is the token server URL itself.
-    
-    # Load the private key from the .env file
-    private_key_bytes = PRIVATE_KEY_PEM.encode("utf-8")
-    private_key = serialization.load_pem_private_key(
-        private_key_bytes,
-        password=None,
-        backend=default_backend()
-    )
+    # Read the private key directly from the file
+    try:
+        with open("private_key.pem", "rb") as key_file:
+            private_key_bytes = key_file.read()
+            private_key = serialization.load_pem_private_key(
+                private_key_bytes,
+                password=None,
+                backend=default_backend()
+            )
+    except FileNotFoundError:
+        return jsonify({"error": "Private key file not found. Please ensure private_key.pem is in the same directory as app.py"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Failed to load private key: {str(e)}"}), 500
 
-    # JWT header with key ID
     jwt_header = {
         "alg": "RS384",
         "kid": JWKS_KID,
     }
     
-    # JWT claims
     jwt_claims = {
         "iss": CLIENT_ID,
         "sub": CLIENT_ID,
         "aud": token_server_url,
         "exp": jwt.utils.datetime.utcnow() + jwt.utils.timedelta(minutes=5),
-        "jti": str(uuid.uuid4()), # JSON Token ID
+        "jti": str(uuid.uuid4()),
     }
     
-    # Generate the JWT
     client_assertion = jwt.encode(
         jwt_claims,
         private_key,
@@ -136,8 +127,6 @@ def redirect_handler():
         headers=jwt_header
     )
 
-    # 2. Exchange the authorization code for an access token
-    # This is a backend POST request
     token_payload = {
         "grant_type": "authorization_code",
         "code": auth_code,
@@ -148,16 +137,13 @@ def redirect_handler():
     }
 
     try:
-        # Perform the token exchange
         token_response = requests.post(token_server_url, data=token_payload)
         token_response.raise_for_status()
         token_data = token_response.json()
 
-        # Extract the access token and other context from the response
         access_token = token_data.get("access_token")
         patient_id = token_data.get("patient")
         
-        # Now you can use the access token to make FHIR API calls
         fhir_headers = {
             "Authorization": f"Bearer {access_token}",
             "Accept": "application/fhir+json"
@@ -167,7 +153,6 @@ def redirect_handler():
         patient_response = requests.get(patient_url, headers=fhir_headers)
         patient_data = patient_response.json()
         
-        # Display the patient data
         return jsonify({
             "status": "success",
             "message": "Successfully authenticated and fetched patient data.",
