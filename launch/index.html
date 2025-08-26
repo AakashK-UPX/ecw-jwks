@@ -33,23 +33,23 @@
         const urlParams = new URLSearchParams(window.location.search);
         const iss = urlParams.get('iss');
         const launch = urlParams.get('launch');
-        console.log(iss+":iss");
+        console.log(iss);
         console.log(launch);
 
-        // if (iss && launch) {
-        //     // Forward the parameters to our backend server
-        //     // Ensure this URL is correct for where you're running your Flask app
-        //     //const backendUrl = `https://aakashk-upx.github.io/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
-        //     // Change this line
-        //     const backendUrl = `http://127.0.0.1:8080/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
-        //     window.location.href = backendUrl;
-        // } else {
-        //     // Handle cases where the launch parameters are missing
-        //     console.error("Missing 'iss' or 'launch' parameters in URL.");
-        //     document.querySelector("h1").textContent = "Launch Failed";
-        //     document.querySelector("p").textContent = "Missing required parameters. Please launch from eClinicalWorks.";
-        //     document.querySelector(".animate-pulse").style.width = "0%";
-        // }
+        if (iss && launch) {
+            // Forward the parameters to our backend server
+            // Ensure this URL is correct for where you're running your Flask app
+            //const backendUrl = `https://aakashk-upx.github.io/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
+            // Change this line
+            const backendUrl = `http://127.0.0.1:8080/ecw-jwks/launch?iss=${encodeURIComponent(iss)}&launch=${encodeURIComponent(launch)}`;
+            window.location.href = backendUrl;
+        } else {
+            // Handle cases where the launch parameters are missing
+            console.error("Missing 'iss' or 'launch' parameters in URL.");
+            document.querySelector("h1").textContent = "Launch Failed";
+            document.querySelector("p").textContent = "Missing required parameters. Please launch from eClinicalWorks.";
+            document.querySelector(".animate-pulse").style.width = "0%";
+        }
     </script>
 </body>
 </html>
