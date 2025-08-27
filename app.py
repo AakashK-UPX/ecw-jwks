@@ -33,7 +33,7 @@ REDIRECT_URL = "https://aakashk-upx.github.io/ecw-jwks/redirect/"
 #     "user/CareTeam.read user/Condition.read user/Provenance.read user/CarePlan.read"
 # )
 REQUESTED_SCOPES = (
-    "fhirUser patient/Patient.read"
+    "launch fhirUser user/Patient.read"
 )
 
 app = Flask(__name__)
@@ -79,6 +79,7 @@ def launch():
     }
     
     auth_url = f"{auth_server_url}?{requests.compat.urlencode(auth_params)}"
+    print(auth_url)
     return redirect(auth_url)
 
 @app.route("/ecw-jwks/redirect", methods=["GET"])
