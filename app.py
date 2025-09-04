@@ -33,7 +33,7 @@ REDIRECT_URL = "https://aakashk-upx.github.io/ecw-jwks/redirect/"
 #     "user/CareTeam.read user/Condition.read user/Provenance.read user/CarePlan.read"
 # )
 REQUESTED_SCOPES = (
-    "launch fhirUser user/Patient.read"
+    "launch fhirUser online_access user/Patient.read"
 )
 
 app = Flask(__name__)
@@ -136,6 +136,7 @@ def redirect_handler():
         "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
         "client_assertion": client_assertion
     }
+    print(auth_code)
 
     try:
         token_response = requests.post(token_server_url, data=token_payload)
